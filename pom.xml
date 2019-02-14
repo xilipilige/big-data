@@ -12,6 +12,7 @@
         <module>spark-sql-example</module>
         <module>redis-example</module>
         <module>spark-spring</module>
+        <module>storm-example</module>
     </modules>
 
 
