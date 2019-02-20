@@ -1,5 +1,6 @@
 package com.agioe.big.data.hbase.es;
 
+import com.agioe.big.data.hbase.es.hbase.HBaseConn;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Table;
 import org.junit.Test;

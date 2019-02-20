@@ -1,4 +1,4 @@
-package com.agioe.big.data.hbase.es;
+package com.agioe.big.data.hbase.es.hbase;
 
 
 import org.apache.hadoop.conf.Configuration;
