@@ -54,11 +54,11 @@ public class HBaseUtilTest {
      */
     @Test
     public void ScanFileDetails() {
-        ResultScanner scanner = HBaseUtil.getScanner("transaction_record_list", "rowkey1", "rowkey1");
+        ResultScanner scanner = HBaseUtil.getScanner("test_list", "rowkey1", "rowkey11");
         if (scanner != null) {
             scanner.forEach(result -> {
                 System.out.println("rowKey=" + Bytes.toString(result.getRow()));
-                System.out.println("transaction_record_list=" + Bytes.toString(result.getValue(Bytes.toBytes("fileInfo"), Bytes.toBytes("serial_num"))));
+                System.out.println("test_list=" + Bytes.toString(result.getValue(Bytes.toBytes("fileInfo"), Bytes.toBytes("serial_num"))));
             });
             scanner.close();
         }
@@ -69,7 +69,7 @@ public class HBaseUtilTest {
      */
     @Test
     public void deleteRow() {
-        HBaseUtil.deleteRow("FileTable", "rowkey1");
+        HBaseUtil.deleteRow("test_list", "rowkey11");
     }
 
     /**
