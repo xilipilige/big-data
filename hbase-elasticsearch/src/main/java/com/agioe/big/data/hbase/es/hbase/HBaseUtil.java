@@ -231,6 +231,15 @@ public class HBaseUtil {
         return true;
     }
 
+    /**
+     * 删除列
+     *
+     * @param tableName
+     * @param rowKey
+     * @param cfName
+     * @param qualifier
+     * @return
+     */
     public static boolean deleteQualifier(String tableName, String rowKey, String cfName, String qualifier) {
         try {
             Table table = HBaseConn.getTable(tableName);
