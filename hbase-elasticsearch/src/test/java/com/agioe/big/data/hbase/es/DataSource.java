@@ -38,7 +38,7 @@ public class DataSource {
             put.addColumn(Bytes.toBytes("time"), Bytes.toBytes(String.valueOf(System.currentTimeMillis())), Bytes.toBytes(roundNumber()));
             puts.add(put);
         }
-        HBaseUtil.putRows("point_monitor_data", puts);
+        HBaseUtil.putRows("monitor_data", puts);
 
     }
 
