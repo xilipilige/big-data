@@ -1,5 +1,6 @@
 package com.agioe.big.data.hbase.es.hbase;
 
+import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
@@ -8,6 +9,7 @@ import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -110,6 +112,25 @@ public class HBaseUtil {
             e.printStackTrace();
         }
         return null;
+    }
+
+    /**
+     * 批量获取数据
+     *
+     * @param rowKeyList
+     * @return
+     * @throws IOException
+     */
+    public static Result[] batchGetRow(List<String> rowKeyList) throws IOException {
+        List<Get> getList = new ArrayList();
+        String tableName = "table_a";
+        Table table = HBaseConn.getTable(tableName);
+        for (String rowKey : rowKeyList) {
+            Get get = new Get(Bytes.toBytes(rowKey));
+            getList.add(get);
+        }
+        Result[] results = table.get(getList);
+        return results;
     }
 
     /**
