@@ -5,9 +5,17 @@ import com.agioe.big.data.hbase.es.es.EmployeeRepository;
 import com.google.gson.Gson;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.aggregations.Aggregation;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.Aggregations;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
+import org.elasticsearch.search.aggregations.metrics.sum.InternalSum;
+import org.elasticsearch.search.aggregations.metrics.sum.SumAggregationBuilder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,14 +24,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
+import org.springframework.data.elasticsearch.core.ResultsExtractor;
 import org.springframework.data.elasticsearch.core.query.Criteria;
 import org.springframework.data.elasticsearch.core.query.CriteriaQuery;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
+import org.springframework.data.elasticsearch.core.query.SearchQuery;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 
 /**
@@ -49,8 +57,8 @@ public class ESTest {
     public void add() {
         Employee employee = new Employee();
         employee.setId(UUID.randomUUID().toString());
-        employee.setFirstName("xuxu");
-        employee.setLastName("sun");
+        employee.setFirstName("jack");
+        employee.setLastName("yong");
         employee.setAge(21);
         employee.setAbout("i am in peking");
         employeeRepository.save(employee);
@@ -180,14 +188,55 @@ public class ESTest {
 
         for (SearchHit hit : searchResponse.getHits()) {
             Iterator<Map.Entry<String, Object>> iterator = hit.getSource().entrySet().iterator();
-            while(iterator.hasNext()) {
+            while (iterator.hasNext()) {
                 Map.Entry<String, Object> next = iterator.next();
                 System.out.println(next.getKey() + ": " + next.getValue());
-                if(searchResponse.getHits().hits().length == 0) {
+                if (searchResponse.getHits().hits().length == 0) {
                     break;
                 }
             }
         }
+    }
+
+    /**
+     * 分组查询
+     * @see :https://blog.csdn.net/u011403655/article/details/71107415
+     *           https://www.cnblogs.com/ouyanxia/p/8288749.html
+     */
+    @Test
+    public void groupQuery() {
+
+        Map map = new HashMap<>();
+
+        TermsAggregationBuilder tb = AggregationBuilders.terms("name").field("firstName");
+        SumAggregationBuilder sb = AggregationBuilders.sum("sum").field("age");
+
+        tb.subAggregation(sb);
+        BoolQueryBuilder bqb = QueryBuilders.boolQuery();
+        SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(bqb).withIndices("company").withTypes("employee")
+                .addAggregation(tb)
+                .build();
+        Aggregations aggregations = elasticsearchTemplate.query(searchQuery, new ResultsExtractor<Aggregations>() {
+            @Override
+            public Aggregations extract(SearchResponse response) {
+                return response.getAggregations();
+            }
+        });
+        Terms term = aggregations.get("name");
+        if (term.getBuckets().size() > 0) {
+            for (Terms.Bucket bk : term.getBuckets()) {
+                long count = bk.getDocCount();
+                Map subaggmap = bk.getAggregations().asMap();
+                double amount = ((InternalSum) subaggmap.get("sum")).getValue();
+                System.out.println(bk.getKey());
+                System.out.println(count);
+                System.out.println(amount);
+                map.put("count", count);
+                map.put("amount", amount);
+            }
+        }
+
+
     }
 
 }
