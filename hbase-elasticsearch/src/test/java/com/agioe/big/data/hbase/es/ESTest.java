@@ -5,11 +5,13 @@ import com.agioe.big.data.hbase.es.es.EmployeeRepository;
 import com.google.gson.Gson;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.reindex.BulkByScrollResponse;
+import org.elasticsearch.index.reindex.UpdateByQueryAction;
+import org.elasticsearch.index.reindex.UpdateByQueryRequestBuilder;
+import org.elasticsearch.script.Script;
 import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.Aggregations;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
@@ -25,10 +27,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
 import org.springframework.data.elasticsearch.core.ResultsExtractor;
-import org.springframework.data.elasticsearch.core.query.Criteria;
-import org.springframework.data.elasticsearch.core.query.CriteriaQuery;
-import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
-import org.springframework.data.elasticsearch.core.query.SearchQuery;
+import org.springframework.data.elasticsearch.core.query.*;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.*;
@@ -58,11 +57,54 @@ public class ESTest {
         Employee employee = new Employee();
         employee.setId(UUID.randomUUID().toString());
         employee.setFirstName("jack");
-        employee.setLastName("yong");
+        employee.setLastName("ma");
         employee.setAge(21);
         employee.setAbout("i am in peking");
         employeeRepository.save(employee);
         System.err.println("add a obj");
+    }
+
+    /**
+     * 批量新增
+     */
+    @Test
+    public void batchAdd() {
+        List<Employee> employeeList = new ArrayList<>();
+
+        Employee employee1 = new Employee();
+        employee1.setId(UUID.randomUUID().toString());
+        employee1.setFirstName("hh");
+        employee1.setLastName("yy");
+        employee1.setAge(21);
+        employee1.setAbout("i am in peking");
+
+        employeeList.add(employee1);
+
+
+        Employee employee2 = new Employee();
+        employee2.setId(UUID.randomUUID().toString());
+        employee2.setFirstName("gg");
+        employee2.setLastName("ff");
+        employee2.setAge(21);
+        employee2.setAbout("i am in peking");
+
+        employeeList.add(employee2);
+
+
+        List<IndexQuery> queries = new ArrayList<>();
+        Gson gson = new Gson();
+        for (Employee e : employeeList) {
+            IndexQuery indexQuery = new IndexQuery();
+            indexQuery.setId(e.getId());
+            indexQuery.setSource(gson.toJson(e));
+            indexQuery.setIndexName("company");
+            indexQuery.setType("employee");
+            queries.add(indexQuery);
+        }
+
+        elasticsearchTemplate.bulkIndex(queries);
+        //刷新操作 否则不会实时建立索引
+        elasticsearchTemplate.refresh("company");
     }
 
     /**
@@ -77,7 +119,7 @@ public class ESTest {
     }
 
     /**
-     * 局部更新
+     * 更新
      *
      * @return
      */
@@ -87,6 +129,28 @@ public class ESTest {
         employee.setFirstName("哈哈");
         employeeRepository.save(employee);
         System.err.println("update a obj");
+    }
+
+    /**
+     * 根据条件更新
+     *
+     * @see :https://blog.csdn.net/shihlei/article/details/84827595
+     */
+    @Test
+    public void updateByQuery() {
+        String index = "company";
+
+        BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
+        queryBuilder.must(QueryBuilders.termQuery("firstName", "wu"));
+
+        UpdateByQueryRequestBuilder updateByQuery = UpdateByQueryAction.INSTANCE.newRequestBuilder(elasticsearchTemplate.getClient())
+                .filter(queryBuilder)
+                .source(index)
+                .script(new Script("ctx._source.lastName=='bb'"));
+
+        BulkByScrollResponse response = updateByQuery.get();
+
+
     }
 
     /**
@@ -102,7 +166,7 @@ public class ESTest {
 
 
     /**
-     * 查询
+     * 条件查询
      *
      * @return
      */
@@ -117,6 +181,7 @@ public class ESTest {
      * 分页查询
      *
      * @return
+     * @see: https://blog.csdn.net/larger5/article/details/79777319
      */
     @Test
     public void queryByPage() {
@@ -180,8 +245,12 @@ public class ESTest {
         BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery()
                 .should(QueryBuilders.termQuery("lastName", "shen"))
                 .should(QueryBuilders.termQuery("lastName", "sun"));
+
         SearchRequestBuilder searchRequestBuilder =
-                elasticsearchTemplate.getClient().prepareSearch("company").setTypes("employee");
+                elasticsearchTemplate.getClient()
+                        .prepareSearch("company")
+                        .setTypes("employee")
+                        .setFetchSource("age", null);
 
         SearchResponse searchResponse = searchRequestBuilder.setQuery(boolQueryBuilder).execute().actionGet();
 
@@ -200,14 +269,15 @@ public class ESTest {
 
     /**
      * 分组查询
+     *
      * @see :https://blog.csdn.net/u011403655/article/details/71107415
-     *           https://www.cnblogs.com/ouyanxia/p/8288749.html
+     * https://www.cnblogs.com/ouyanxia/p/8288749.html
      */
     @Test
     public void groupQuery() {
 
         Map map = new HashMap<>();
-
+        //name和sum是别名
         TermsAggregationBuilder tb = AggregationBuilders.terms("name").field("firstName");
         SumAggregationBuilder sb = AggregationBuilders.sum("sum").field("age");
 
