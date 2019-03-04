@@ -1,4 +1,4 @@
-package com.agioe.big.data.es;
+package com.agioe.big.data.es.model;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;

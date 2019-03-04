@@ -1,5 +1,7 @@
 package com.agioe.big.data.es;
 
+import com.agioe.big.data.es.model.Employee;
+import com.agioe.big.data.es.repository.EmployeeRepository;
 import com.google.gson.Gson;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;

@@ -1,5 +1,6 @@
-package com.agioe.big.data.es;
+package com.agioe.big.data.es.repository;
 
+import com.agioe.big.data.es.model.Employee;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
