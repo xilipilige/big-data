@@ -47,6 +47,13 @@ public class ESTest {
     @Autowired
     private ElasticsearchTemplate elasticsearchTemplate;
 
+
+
+    @Test
+    public void refresh(){
+        elasticsearchTemplate.refresh("company");
+    }
+
     /**
      * 添加
      *
@@ -146,9 +153,10 @@ public class ESTest {
         UpdateByQueryRequestBuilder updateByQuery = UpdateByQueryAction.INSTANCE.newRequestBuilder(elasticsearchTemplate.getClient())
                 .filter(queryBuilder)
                 .source(index)
-                .script(new Script("ctx._source.lastName=='bb'"));
+                .script(new Script("ctx._source.lastName='cc'"));
 
         BulkByScrollResponse response = updateByQuery.get();
+//        elasticsearchTemplate.refresh("company");
 
 
     }
