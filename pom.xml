@@ -22,6 +22,7 @@
         <module>storm-example</module>
         <module>elasticsearch-example</module>
         <module>hbase-example</module>
+        <module>flink-example</module>
     </modules>
 
 
