@@ -20,7 +20,8 @@
         <module>redis-example</module>
         <module>spark-spring</module>
         <module>storm-example</module>
-        <module>hbase-elasticsearch</module>
+        <module>elasticsearch-example</module>
+        <module>hbase-example</module>
     </modules>
 
 
