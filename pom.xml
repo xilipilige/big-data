@@ -23,6 +23,7 @@
         <module>elasticsearch-example</module>
         <module>hbase-example</module>
         <module>flink-example</module>
+        <module>spark-streaming-example</module>
     </modules>
 
 
